@@ -36,9 +36,20 @@ sağlamaz. Bu nedenle önerinin model tabanlı RL kolu sinir ağı olmadan uygul
 geçiş modelini etkileşim verisinden doğrusal regresyonla öğrenir ve bu modelle planlama yapar. Bu
 yöntem bu metinde MB-RL olarak anılır. Bu depodaki hiçbir yöntem sinir ağı kullanmaz.
 
+### 1.1 İlgili çalışmalar
+
+Endüstriyel sıcaklık kontrolünde PID yaygın bir çözümdür (Åström & Hägglund, 2006). Ölü zamanın ve kısıtların önemli olduğu
+proseslerde ise bir modelle ileriye bakan ve kayan ufukta karar veren model öngörülü kontrol (MPC) kullanılır (Camacho &
+Bordons, 2007). Model tabanlı RL bu fikri, modeli etkileşim verisinden öğrenerek uygular. PETS (Chua vd., 2018) dinamiği
+olasılıksal bir sinir ağı topluluğuyla öğrenir ve eylemleri çapraz entropi yöntemiyle (Rubinstein & Kroese, 2004) planlar.
+Modelden bağımsız tarafta fonksiyon yaklaştırmalı Q-öğrenme (Sutton & Barto, 2018), en küçük kareler tabanlı politika
+iterasyonu (Lagoudakis & Parr, 2003) ve doğrusal politikalar üzerinde rastgele arama (Mania vd., 2018) bu çalışmada
+karşılaştırma için kullanılan yaklaşımlardır. Bu çalışma PETS'in veri toplama, model öğrenme ve planlama döngüsünü izler,
+ancak sinir ağı yerine ridge regresyonla öğrenilen doğrusal bir model kullanır.
+
 ## 2. MDP formülasyonu
 
-Problem, ayrık zamanlı bir Markov karar süreci `(S, A, P, R, γ)` olarak modellenmiştir. Kontrol
+Problem, ayrık zamanlı bir Markov karar süreci $(S, A, P, R, \gamma)$ olarak modellenmiştir. Kontrol
 adımı Δt = 10 s, bölüm uzunluğu 720 adımdır (2 saatlik çalışma). İndirim faktörü γ = 0.99 seçilmiştir.
 Bu değerin efektif ufku yaklaşık 100 adım (≈ 17 dk) olup ısıtıcı gecikmesini ve bir partinin
 bölgedeki ısınma süresinin başlangıcını kapsar.
@@ -51,6 +62,8 @@ durum Markov özelliğine yaklaştırılmış ve MDP varsayımıyla çalışılm
 ### 2.1 Durum uzayı S
 
 N = 3 bölge için 30 boyutlu, normalize gözlem vektörü:
+
+*Tablo 1. Gözlem vektörünün bileşenleri.*
 
 | Bileşen | Boyut | Anlamı |
 |---|---|---|
@@ -72,11 +85,13 @@ bekleyen komutlar ise kontrolcünün kendi geçmişidir.
 ### 2.2 Eylem uzayı A
 
 Fiziksel eylem her bölgenin rezistans güç oranıdır (ya da doğalgaz oransal vana açıklığı),
-`u ∈ [0, 1]³`. Ajan ise güçteki değişimi seçer (artımlı / velocity biçimi):
-`a ∈ [−1, 1]³`, `u_t = clip(u_{t−1} + 0.1·a, 0, 1)`.
+$u \in [0,1]^3$. Ajan ise güçteki değişimi seçer (artımlı / velocity biçimi):
 
-Artımlı biçimin sebebi fırının yüksek statik kazancıdır: `ΔT = P_max · Δu / h ≈ 200 kW · 0.01 / 75 W/K
-≈ 27 °C`, yani güç çıkışındaki %1'lik hata kalıcı durumda yaklaşık 27 °C sapma yaratır. Artımlı
+```math
+a_t \in [-1,1]^3, \qquad u_t = \mathrm{clip}(u_{t-1} + 0.1\,a_t,\ 0,\ 1)
+```
+
+Artımlı biçimin sebebi fırının yüksek statik kazancıdır: $\Delta T = P_{\max}\,\Delta u / h \approx 200\ \mathrm{kW} \cdot 0.01 / (75\ \mathrm{W/K}) \approx 27\,^\circ\mathrm{C}$, yani güç çıkışındaki %1'lik hata kalıcı durumda yaklaşık 27 °C sapma yaratır. Artımlı
 biçimde kalıcı durum için ajanın yalnızca sıfır üretmesi yeterlidir. Adil kıyas için PID de aynı
 ±%10/adım sınırıyla çalıştırılmıştır.
 
@@ -88,11 +103,16 @@ ve sensör gürültüsü (Gauss). Ajan bu denklemleri görmez, geçişi veriden 
 
 ### 2.4 Ödül fonksiyonu R
 
+```math
+r_t = -\left( w_1 \frac{1}{N}\sum_{i=1}^{N} e_{i,t}^2 + w_2 \frac{E_t}{E_{\max}} + w_3 \frac{1}{N}\sum_{i=1}^{N} |u_{i,t} - u_{i,t-1}| \right) - c\,\mathbf{1}\left[\max_i T_{i,t} > 950\,^\circ\mathrm{C}\right]
 ```
-r_t = −( w₁ · (1/N) Σ eᵢ²  +  w₂ · E_t / E_max  +  w₃ · (1/N) Σ |uᵢ,t − uᵢ,t−1| )  −  c · 1[max Tᵢ > 950 °C]
-eᵢ = (Tᵢ − T_ref,i) / 20 °C,   E_t: adımda harcanan kWh,   E_max: tüm ısıtıcılar tam güçteyken kWh
-w₁ = 1.0, w₂ = 0.2, w₃ = 0.05, c = 2 (950 °C üstünde geçen her adım için)
+
+```math
+e_{i,t} = \frac{T_{i,t} - T_{\mathrm{ref},i}}{20\,^\circ\mathrm{C}}
 ```
+
+Burada $E_t$ adımda harcanan enerji (kWh), $E_{\max}$ tüm ısıtıcılar tam güçteyken adım başına harcanan enerjidir.
+Ağırlıklar $w_1 = 1.0$, $w_2 = 0.2$, $w_3 = 0.05$; güvenlik cezası $c = 2$ olup 950 °C üstünde geçen her adım için uygulanır.
 
 Ödev "hedef profilden sapma karesi ve enerji ile ters orantılı" bir ödül istemektedir. Negatif
 ağırlıklı maliyet bu koşulu sağlar ve planlayıcının toplamsal maliyet olarak doğrudan kullanmasına
@@ -128,16 +148,29 @@ Bir terimin davranışı etkileyebilmesi için ağırlığı kadar ajanın o ter
 Ortam `gymnasium.Env` arayüzüyle yazılmıştır (`src/furnace_rl/envs/furnace_env.py`). Her bölge
 tek bir ısıl kütle olarak modellenmiştir. Fizik 2 s'lik alt adımlarla Euler yöntemiyle çözülür.
 
-**Aktüatör** (ısıl eylemsizlik ve ölü zaman):
-`u_eff,i ← u_eff,i + (Δt/τ_a)(u_i(t − d) − u_eff,i)`, τ_a = 150 s, d = 30 s
+**Aktüatör** (ısıl eylemsizlik ve ölü zaman; τ_a = 150 s, d = 30 s):
+
+```math
+u^{\mathrm{eff}}_{i,t+1} = u^{\mathrm{eff}}_{i,t} + \frac{\Delta t}{\tau_a}\left(u_{i,t-d} - u^{\mathrm{eff}}_{i,t}\right)
+```
 
 **Bölge enerji dengesi:**
-`C dTᵢ/dt = P_max,i u_eff,i − h (Tᵢ − T_amb) + k (T_{i−1} − Tᵢ) + k (T_{i+1} − Tᵢ) − Σ_j Q_j`
 
-**Parti ısınması:** `Q_j = hA_m m_j (Tᵢ − T_m,j)`, `m_j c_m dT_m,j/dt = Q_j`; parti hızı v_j ile
-ilerler, her 5 m'de bir sonraki bölgeye geçer.
+```math
+C\,\frac{dT_i}{dt} = P_{\max,i}\,u^{\mathrm{eff}}_i - h\,(T_i - T_{\mathrm{amb}}) + k\,(T_{i-1} - T_i) + k\,(T_{i+1} - T_i) - \sum_j Q_j
+```
 
-**Termokupl:** `T_tc ← T_tc + (Δt/τ_tc)(T − T_tc)`, `T_meas = T_tc + N(0, σ²)`, τ_tc = 20 s
+**Parti ısınması** (parti $v_j$ hızıyla ilerler, her 5 m'de bir sonraki bölgeye geçer):
+
+```math
+Q_j = hA_m\,m_j\,(T_i - T_{m,j}), \qquad m_j c_m \frac{dT_{m,j}}{dt} = Q_j
+```
+
+**Termokupl** (τ_tc = 20 s):
+
+```math
+T^{\mathrm{tc}}_{t+1} = T^{\mathrm{tc}}_t + \frac{\Delta t}{\tau_{\mathrm{tc}}}\left(T_t - T^{\mathrm{tc}}_t\right), \qquad T^{\mathrm{meas}}_t = T^{\mathrm{tc}}_t + \mathcal{N}(0, \sigma^2)
+```
 
 Parametreler ve kalibrasyon: `docs/03_simulator_tasarimi.md` §3. Kalibrasyonun amacı, problemin
 ne PID'in kolayca çözebileceği kadar kolay (ilk denemede düşüş 17 °C) ne de fırın kapasitesi
@@ -168,13 +201,25 @@ yerine ridge regresyonla öğrenilen doğrusal bir model kullanılır (`src/furn
 
 **Öğrenilen model:**
 
-```
-e_{t+1} = e_t + W [e_t, u_eff,t, l_t, 1]ᵀ + b_t       (e: sıcaklık hatası, 3 bölge)
-u_eff,i,{t+1} = αᵢ u_eff,i,t + βᵢ u_i,t−d             (ısıtıcı gecikmesi)
+```math
+e_{t+1} = e_t + W \left[e_t,\ u^{\mathrm{eff}}_t,\ l_t,\ 1\right]^\top + b_t
 ```
 
-Burada `l_t` bölge yükü ve yeni giren kütleyi izleyen üstel süzgeçtir (ρ = 0.995). Partinin iç
-sıcaklığı ölçülemediği için ısı çekişi bu özellikle temsil edilir. `b_t` son model hatalarının kayan
+```math
+u^{\mathrm{eff}}_{i,t+1} = \alpha_i\,u^{\mathrm{eff}}_{i,t} + \beta_i\,u_{i,t-d}
+```
+
+İlk denklem üç bölgenin sıcaklık hatasını, ikincisi bölge başına ısıtıcı gecikmesini tanımlar. $W$ katsayıları ridge
+regresyonun kapalı çözümüyle hesaplanır:
+
+```math
+W = \left(X^\top X + \lambda I\right)^{-1} X^\top Y
+```
+
+Burada $X$'in satırları $[e_t,\ u^{\mathrm{eff}}_t,\ l_t,\ 1]$, $Y$'nin satırları $e_{t+1} - e_t$ değerleridir.
+
+$l_t$ bölge yükü ve yeni giren kütleyi izleyen üstel süzgeçtir (ρ = 0.995). Partinin iç
+sıcaklığı ölçülemediği için ısı çekişi bu özellikle temsil edilir. $b_t$ son model hatalarının kayan
 ortalamasıdır (bozucu kestirimi).
 
 **Planlama.** Her 60 s'de çapraz entropi yöntemi (CEM; Rubinstein & Kroese, 2004) ile 10 dakikalık eylem dizisi aranır. Her turda
@@ -187,6 +232,8 @@ onu bilir (PETS'te de böyledir). Ölü zaman adım sayısı, ±%10 eylem sını
 tasarım bilgisi olarak verilmiştir. Isıl kapasite, kayıp, iletim, ısı transferi ve aktüatör zaman
 sabiti ajana verilmez, veriden öğrenilir. Öğrenilen model fizikle tutarlıdır: gerçek değeri 0.9355 olan
 ısıtıcı katsayısı α 0.9351 kestirilmiştir, güçten sıcaklığa kazançlar gerçek değerlerin %81–94'üdür.
+
+*Tablo 2. MB-RL hiperparametreleri.*
 
 | Hiperparametre | Değer |
 |---|---|
@@ -212,7 +259,7 @@ denenmiştir. Üçü de modelden bağımsızdır.
 - **LSPI** (Lagoudakis & Parr, 2003; `lspi.py`): karesel özelliklerle doğrusal Q, LSTD-Q ile politika
   değerlendirme, kapalı biçimde politika iyileştirme.
 - **ARS, doğrusal politika** (Mania vd., 2018; `ars.py`): 15 özellikli doğrusal politikanın parametreleri
-  üzerinde rastgele yönlerle sonlu fark gradyanı. Rubrikte rastgele arama klasik yöntem sayıldığı için
+  üzerinde rastgele yönlerle sonlu fark gradyanı. Ödev değerlendirmesinde rastgele arama klasik yöntem sayıldığı için
   ana RL yöntemi olarak değil, karşılaştırma olarak sunulmuştur.
 
 ## 5. Deneyler ve sonuçlar
@@ -221,6 +268,8 @@ Test sonuçları eğitimde kullanılmayan 20 senaryodandır (her biri 2–7 soğ
 çalışma, aynı seed'ler). Hiperparametreler test sonuçlarına bakılarak değiştirilmemiştir.
 
 ### 5.1 Yöntem karşılaştırması
+
+*Tablo 3. 20 test senaryosunda yöntem karşılaştırması (3 seed ortalaması).*
 
 | Yöntem | Eğitim adımı | Test ödülü | RMSE [°C] | Maks. düşüş [°C] | Aşma [°C] | Enerji [kWh] |
 |---|---|---|---|---|---|---|
@@ -257,6 +306,8 @@ arası; PID: 11.93 °C, −364).
 *Şekil 3. MB-RL doğrulama RMSE'si, 3 seed ortalaması ± std, kesikli çizgi PID.*
 
 ### 5.3 PID ile karşılaştırma (E3)
+
+*Tablo 4. 20 test senaryosunda PID ve MB-RL.*
 
 | Metrik | PID | MB-RL (3 seed ort. ± std) | Fark |
 |---|---|---|---|
@@ -295,6 +346,8 @@ dengelemesiyle tutarlı görünmektedir, ama bu ayrıca test edilmemiştir.
 Her ayar 3 seed ile eğitilmiş, referanstan tek fark o ayardır. Değerler 20 test senaryosundandır
 (std: seed'ler arası).
 
+*Tablo 5. Hiperparametre analizi.*
+
 | Ayar | Test ödülü | RMSE [°C] | Maks. düşüş [°C] | Aşma [°C] |
 |---|---|---|---|---|
 | **Referans** (H = 60, λ = 1e-3, nüfus 200, ρ = 0.995) | **−522.4 ± 18.0** | 13.63 ± 0.28 | 50.1 | 18.8 |
@@ -321,6 +374,8 @@ kestirimi gerekli görünmemektedir. Bu ayar sade tutulabilirdi.
 
 Yeniden eğitim yapılmadan, termokupl gürültüsü σ ∈ {0, 1, 3, 5} °C ile 20 test senaryosu:
 
+*Tablo 6. Termokupl gürültüsüne gürbüzlük.*
+
 | σ [°C] | PID RMSE | MB-RL RMSE (3 seed) | PID ödül | MB-RL ödül | PID titreşim | MB-RL titreşim |
 |---|---|---|---|---|---|---|
 | 0 | 18.84 | **13.47** | −864 | **−520** | 0.006 | 0.028 |
@@ -339,6 +394,8 @@ türev terimi gürültüyü doğrudan güce yansıtır (0.006'dan 0.071'e).
 
 ### 5.6 Dağılım dışı senaryolar (E7)
 
+*Tablo 7. Eğitimde görülmemiş senaryolar.*
+
 | Senaryo | PID RMSE | MB-RL RMSE | PID düşüş | MB-RL düşüş | PID aşma | MB-RL aşma |
 |---|---|---|---|---|---|---|
 | Tek ağır parti (1500 kg) | 21.0 | **13.0** | 77.8 | **40.9** | **15.3** | 21.7 |
@@ -356,6 +413,8 @@ PID'den büyüktür. 2500 kg partide 33.8 °C'ye çıkar.
 Gözlemden gelecek partinin bilgisi çıkarılarak aynı seed ve ayarlarla eğitim yapılmıştır
 (`configs/env_no_preview.yaml`). Ajan hâlâ bölgedeki mevcut yükü görür, yalnızca henüz gelmemiş partiyi
 göremez.
+
+*Tablo 8. Önizleme ablasyonu.*
 
 | Metrik | PID | MB-RL önizlemesiz | MB-RL önizlemeli |
 |---|---|---|---|
@@ -379,6 +438,8 @@ bir kontrolcüden iyi değildir.
 ### 5.8 Ödül ağırlıkları taraması (E4)
 
 Enerji ağırlığı w₂ ∈ {0, 0.1, 0.2, 0.5, 1.0} ile her biri 3 seed eğitilmiştir (`results/eval/e4_energy_weight.md`).
+
+*Tablo 9. Enerji ağırlığı taraması.*
 
 | Politika | Test RMSE [°C] | Maks. düşüş [°C] | Aşma [°C] | Enerji [kWh] |
 |---|---|---|---|---|
@@ -409,6 +470,8 @@ düşürülmesine izin verilerek elde edilebilir.
 **Titreşim cezası (w₃ = 0).** Eylem değişimi cezası kaldırılarak 3 seed eğitim yapılmıştır
 (`results/eval/e4_smooth.md`). Titreşim iki ölçüyle verilmiştir: ortalama |Δu| ve güç komutunun ardışık adımlarda yön
 değiştirme oranı.
+
+*Tablo 10. Titreşim cezasının etkisi.*
 
 | Politika | RMSE [°C] | Ort. \|Δu\| | Yön değişimi oranı |
 |---|---|---|---|
@@ -470,8 +533,10 @@ değişken hedef profilleri, bölüm başındaki keşfin güvenli hale getirilme
 
 ## 8. Tekrarlanabilirlik
 
-Tüm deneyler aşağıdaki komutlarla yeniden üretilebilir. Ortam ayarlarının tek kaynağı
+Tüm deneyler Ek A'daki komutlarla yeniden üretilebilir. Ortam ayarlarının tek kaynağı
 `src/furnace_rl/config.py`'dir. Deney farkları `configs/` altındaki küçük YAML dosyalarıyla verilir.
+
+*Tablo 11. Deney düzeni.*
 
 | Öğe | Değer |
 |---|---|
@@ -481,6 +546,8 @@ Tüm deneyler aşağıdaki komutlarla yeniden üretilebilir. Ortam ayarlarının
 | RL seed'leri | 0, 1, 2 (tüm deneyler) |
 | Yazılım | Python 3.11, gymnasium 0.29.1, numpy, pandas (sinir ağı kütüphanesi yok) |
 | Testler | `pytest` ile 20 test (`tests/`), biri kodda sinir ağı kütüphanesi olmadığını denetler |
+
+*Tablo 12. Deneyler, betikler ve çıktılar.*
 
 | Deney | Betik | Çıktı |
 |---|---|---|
@@ -495,6 +562,18 @@ Tüm deneyler aşağıdaki komutlarla yeniden üretilebilir. Ortam ayarlarının
 | E6, E7 gürbüzlük | `scripts/e6_e7_robustness.py` | `results/eval/e6_noise.csv`, `e7_special.md`, `results/figures/e6_noise.png` |
 | E8 önizleme ablasyonu | `scripts/compare_e3.py --env-config ...`, `scripts/plot_e8.py` | `results/eval/e8_nopreview_comparison.md`, `results/figures/e8_*.png` |
 | Ödül yan etkileri | `scripts/reward_analysis.py` | `results/eval/reward_analysis.md` |
+
+## Kaynaklar
+
+- Åström, K. J., & Hägglund, T. (2006). *Advanced PID Control*. ISA.
+- Camacho, E. F., & Bordons, C. (2007). *Model Predictive Control* (2. baskı). Springer.
+- Chua, K., Calandra, R., McAllister, R., & Levine, S. (2018). Deep reinforcement learning in a handful of trials using probabilistic dynamics models. *NeurIPS*.
+- Lagoudakis, M. G., & Parr, R. (2003). Least-squares policy iteration. *Journal of Machine Learning Research*, 4, 1107–1149.
+- Mania, H., Guy, A., & Recht, B. (2018). Simple random search of static linear policies is competitive for reinforcement learning. *NeurIPS*.
+- Rubinstein, R. Y., & Kroese, D. P. (2004). *The Cross-Entropy Method*. Springer.
+- Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An Introduction* (2. baskı). MIT Press.
+
+## Ek A. Kurulum ve yeniden üretme
 
 ### Kurulum
 
@@ -552,15 +631,7 @@ Tüm şekiller `results/figures/`, tablolar `results/eval/` altındadır.
 └── tests/                     # ortam, ajan ve metrik testleri
 ```
 
-## Kaynaklar
-
-- Sutton, R. S., & Barto, A. G. (2018). *Reinforcement Learning: An Introduction* (2. baskı). MIT Press.
-- Lagoudakis, M. G., & Parr, R. (2003). Least-squares policy iteration. *Journal of Machine Learning Research*, 4, 1107–1149.
-- Mania, H., Guy, A., & Recht, B. (2018). Simple random search of static linear policies is competitive for reinforcement learning. *NeurIPS*.
-- Chua, K., Calandra, R., McAllister, R., & Levine, S. (2018). Deep reinforcement learning in a handful of trials using probabilistic dynamics models (PETS). *NeurIPS*.
-- Rubinstein, R. Y., & Kroese, D. P. (2004). *The Cross-Entropy Method*. Springer.
-
-## Ek: Ödev ölçütlerinin karşılandığı bölümler
+## Ek B. Ödev ölçütlerinin karşılandığı bölümler
 
 | Ölçüt | Bölüm ve dosya |
 |---|---|
