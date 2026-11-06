@@ -1,0 +1,12 @@
+# ARS hiperparametreleri (doğrusal politika, sinir ağı yok)
+n_iterations: 500
+n_directions: 16          # N: her turda rastgele yön sayısı
+top_directions: 8         # b: güncellemede kullanılan en iyi yön sayısı
+episodes_per_direction: 1
+nu: 0.05                  # keşif: K'ya eklenen pertürbasyon büyüklüğü
+lr: 0.02                  # α
+eval_every: 5
+
+# değerlendirme: doğrulama senaryoları (test setinden ayrı seed'ler)
+n_val_scenarios: 5
+val_base_seed: 5000

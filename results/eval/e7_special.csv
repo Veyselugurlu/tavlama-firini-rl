@@ -1,0 +1,11 @@
+scenario,group,return,rmse,max_drop,overshoot,energy_kwh
+art_arda_iki_parti,MB-RL,-2269.9,34.9,121.2,12.3,625.1
+art_arda_iki_parti,PID,-3288.4,42.3,144.8,15.1,619.6
+dagilim_disi_2500kg,MB-RL,-4201.5,47.9,144.5,33.8,620.7
+dagilim_disi_2500kg,PID,-6253.8,58.6,181.9,15.1,615.7
+hizli_bant,MB-RL,-179.5,8.4,36.5,22.0,444.4
+hizli_bant,PID,-236.0,10.0,38.8,16.5,442.7
+tek_agir_parti,MB-RL,-369.3,13.0,40.9,21.7,532.2
+tek_agir_parti,PID,-857.2,21.0,77.8,15.3,528.1
+yavas_bant,MB-RL,-72.9,2.9,6.9,11.7,478.6
+yavas_bant,PID,-126.7,6.2,37.1,7.3,476.3

@@ -1,0 +1,22 @@
+# Tile coding'li Q-öğrenme hiperparametreleri (bölge başına bağımsız ajan, sinir ağı yok)
+n_episodes: 3000
+q_init: -15.0             # başlangıç Q değeri (bölge başına)
+gamma: 0.99               # kontrol adımı başına; karar başına γ^decision_steps
+decision_steps: 6         # 60 s'de bir karar
+alpha: 0.1                # tiling sayısına bölünür
+alpha_decay: 0.9          # eğitim sonunda α'nın düşeceği oran
+eps_start: 0.1
+eps_end: 0.01
+eps_decay_episodes: 2500
+# Adım başına normalize eylem (±1 = ±%10 güç). 0 ilk sırada: eşit Q'larda argmax "değiştirme" seçsin.
+actions: [0.0, -0.3, -0.1, -0.03, 0.03, 0.1, 0.3]
+n_tilings: 8
+tiles:
+  #      hata  türev gecikme yük  yaklaşan
+  low:  [-1.6, -1.0, -0.5,  0.0, 0.0]
+  high: [ 1.6,  1.0,  0.5,  1.2, 1.0]
+  bins: [13,    6,    7,    4,   5]
+eval_every: 50
+
+n_val_scenarios: 5
+val_base_seed: 5000

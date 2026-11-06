@@ -1,0 +1,3 @@
+# E4 – ödül ağırlığı taraması: enerji ağırlığı w2 = 0.5 (varsayılan 0.2)
+reward:
+  w_energy: 0.5

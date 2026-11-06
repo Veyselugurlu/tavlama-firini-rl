@@ -1,0 +1,5 @@
+# scripts/tune_pid.py ile ızgara aramasından (E1) seçildi –
+# ölçüt: kararlı ayarlar (salınım < 2 °C) arasında en yüksek ortalama bölüm ödülü
+kp: 0.04
+td: 60.0
+ti: 300.0

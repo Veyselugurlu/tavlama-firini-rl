@@ -1,0 +1,24 @@
+# Model tabanlı RL: doğrusal öğrenilmiş model + CEM planlama (sinir ağı yok)
+n_iterations: 8
+init_episodes: 10         # ilk tur: rastgele keşif
+episodes_per_iter: 5      # sonraki turlar: planlayan ajan + gürültü
+lam: 0.001                # model ridge düzenlileştirmesi
+explore_sigma: 0.3        # rastgele keşif gürültüsü
+explore_sigma_mpc: 0.1    # planlayan ajanın üstüne eklenen gürültü
+noise_hold: 6             # gürültü bu kadar adım sabit (60 s)
+rho: 0.05                 # rastgele keşifte gücün başlangıç seviyesine geri çekilmesi
+fresh_rho: 0.995          # taze yük süzgeci (zaman sabiti ≈ 2000 s, parti ısınma süresine göre seçildi)
+bias_filter: 0.05         # model hatası kestirimi süzgeci
+
+# Planlama
+gamma: 0.99
+horizon: 60               # 10 dk (önizleme ufku)
+segment: 6                # eylem 60 s'lik parçalar halinde planlanır
+replan: 6                 # 60 s'de bir yeniden plan
+cem_pop: 200
+cem_elite: 0.1
+cem_iters: 4
+cem_sigma: 0.5
+
+n_val_scenarios: 5
+val_base_seed: 5000

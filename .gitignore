@@ -1,0 +1,25 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Kişisel ve teslime özel dosyalar depoya girmez
+report/
+teslim/
+scripts/md_to_docx.js
+
+# Sonuçlardan yalnızca şekiller, tablolar ve ana deneyin en iyi modelleri girer
+results/*
+!results/figures/
+!results/eval/
+results/eval/**/*.npz
+!results/models/
+results/models/*
+!results/models/mbrl_seed0/
+!results/models/mbrl_seed1/
+!results/models/mbrl_seed2/
+results/models/mbrl_seed*/*
+!results/models/mbrl_seed*/best_model.npz
+!results/models/mbrl_seed*/evaluations.csv
+!results/models/mbrl_seed*/config.json

@@ -1,0 +1,18 @@
+# LSPI hiperparametreleri (sinir ağı yok; Q, karesel özelliklerle doğrusal)
+gamma: 0.99
+lam: 0.0001             # LSTD-Q ridge düzenlileştirmesi
+min_curv: 0.001         # Q'nun eylemdeki eğriliği için taban (argmax iyi tanımlı kalsın)
+step_size: 1.0          # politika güncellemesinde yumuşatma (1 = tam açgözlü)
+n_iterations: 30        # veri toplama + LSPI turu
+init_episodes: 20       # ilk tur: politika yok, başlangıç gücü etrafında rastgele keşif
+episodes_per_iter: 5
+inner_iterations: 3     # her turda tüm veriyle politika iterasyonu
+explore_sigma: 0.3      # eylem gürültüsü (eylem uzayı [-1, 1])
+sigma_decay: 0.95
+sigma_min: 0.1
+noise_hold: 6           # gürültü bu kadar adım sabit (60 s)
+rho: 0.05               # ilk turda gücün başlangıç seviyesine geri çekilme oranı
+
+# değerlendirme: doğrulama senaryoları (test setinden ayrı seed'ler)
+n_val_scenarios: 5
+val_base_seed: 5000
