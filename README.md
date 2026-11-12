@@ -12,7 +12,7 @@ bir benzetimini yaptım ve ısıtıcıları ne kadar açacağına karar veren bi
 öğretilmiyor: binlerce kez deniyor, sıcaklık hedeften uzaklaştığında ceza alıyor ve hangi durumda ne yapacağını kendisi
 öğreniyor. Sonuç: program fırını yönetmeyi öğrendi, ama klasik yöntemi geçemedi; nedenini aşağıda gösteriyorum.
 
-**Video anlatım:** GELCEK https://drive.google.com/drive/folders/1vY-wTDswQYrG6xvKbn3MynFxJGUSuJ-4
+
 
 ![Fırın animasyonu](results/figures/firin_animasyon.gif)
 
