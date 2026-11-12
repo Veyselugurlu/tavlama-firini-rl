@@ -9,11 +9,21 @@ Amaç hem RL'in temel kavramlarını (state, action, reward, Q-Table, epsilon-gr
 üzerinde uygulamak hem de eğitilmiş ajanı sanayide yaygın kullanılan klasik **PID** kontrolcüyle sayısal olarak
 karşılaştırmaktı. Dersin şartı gereği derin pekiştirmeli öğrenme kullanmadım; projede sinir ağı yok.
 
+**Kısaca, konuyu hiç bilmeyenler için:** Bir fabrikada metal parçaları uzun bir fırının içinden geçiyor ve fırının her
+bölümünün belirli bir sıcaklıkta kalması gerekiyor. İçeri soğuk metal girince fırın soğuyor. Ben bilgisayarda bu
+fırının bir benzetimini yaptım ve ısıtıcıları ne kadar açacağına karar veren bir program (ajan) yazdım. Programa doğru
+cevap öğretilmiyor: binlerce kez deniyor, sıcaklık hedeften uzaklaştığında ceza alıyor ve zamanla hangi durumda ne
+yapması gerektiğini kendisi öğreniyor. Sonra bu programı, fabrikalarda yıllardır kullanılan klasik bir kontrol
+yöntemiyle (PID) aynı koşullarda yarıştırdım. Sonuç: program fırını yönetmeyi öğrendi, ama klasik yöntemi geçemedi;
+nedenini de aşağıda gösteriyorum.
+
 **Video anlatım:** VIDEO_LINKI_BURAYA_  GELCEK
 
 ![Fırın animasyonu](results/figures/firin_animasyon.gif)
 
 Aynı test senaryosunda (2 saatte 7 soğuk parti) üstte PID, altta benim eğittiğim Q-tablosu fırını yönetiyor.
+Animasyonda fırının üç bölümü ve içinden geçen metal partileri (koyu bloklar) görülüyor. Bir bölüm maviye döndüğünde
+soğumuş, kırmızıya döndüğünde fazla ısınmış demek; altındaki turuncu çubuk ısıtıcının ne kadar açık olduğunu gösteriyor.
 
 ## Çalıştırma
 
@@ -45,6 +55,10 @@ Bütün eğitimleri ve grafikleri baştan üretmek için `bash scripts/run_exper
 
 ## Problem Tanımı
 
+**Tavlama**, metali belirli bir sıcaklığa kadar ısıtıp bir süre orada tutarak daha dayanıklı ve kolay işlenebilir hale
+getirme işlemidir. Sürekli çalışan bir tavlama fırınında metal parçaları (partiler) bir bant üzerinde fırının içinden
+geçer ve kaliteli ürün için fırının her bölümünün hedef sıcaklıkta kalması gerekir.
+
 Fırın, sıcaklığı ayrı ayrı kontrol edilen üç bölgeden oluşuyor. Partiler soldan girip bant üzerinde sağa doğru ilerliyor:
 
 ```
@@ -67,10 +81,12 @@ Ajanın hedefi:
 
 Problemi zorlaştıran şey fırının yavaşlığı. Isıtıcıya "gücü artır" komutu verildiğinde 30 saniye boyunca hiçbir şey
 olmuyor (ölü zaman), ısıtıcı yeni gücüne ancak birkaç dakikada ulaşıyor (150 s zaman sabiti), sıcaklık sensörü de 20
-saniye geç ve ±1 °C gürültüyle ölçüyor. Hatayı gördükten sonra tepki veren bir kontrolcü bu yüzden hep geç kalıyor.
+saniye geç ve ±1 °C gürültüyle ölçüyor. Duşta musluğu sıcağa çevirdiğinizde suyun hemen ısınmaması gibi düşünebilirsiniz;
+fırın bunun çok daha yavaşı. Hatayı gördükten sonra tepki veren bir kontrolcü bu yüzden hep geç kalıyor.
 Öte yandan gelecek partinin kütlesi ve hızı tesiste 10 dakika önceden biliniyor (önizleme); ajan bu bilgiyi görüyor.
 
-Gerçek bir fırında deneme yanılma yapılamayacağı için fırının bir simülatörünü `gymnasium.Env` olarak yazdım
+Gerçek bir fırında binlerce kez deneme yanılma yapılamayacağı için fırının bir **simülatörünü**, yani bilgisayarda
+fırın gibi davranan bir programı, `gymnasium.Env` olarak yazdım
 (`src/furnace_rl/envs/furnace_env.py`). İçinde her bölgenin enerji dengesi, ısıtıcı gecikmesi, partilerin ısınıp
 ilerlemesi ve gürültülü sensör var. Parametreleri gerçek bir fırından almadım, kalibre ettim: ilk ayarlarda PID
 partinin yarattığı düşüşü 17 °C ile sınırlayabiliyordu, yani problem öğrenmeye yer bırakmayacak kadar kolaydı. Son
@@ -78,7 +94,8 @@ ayarda 1 tonluk bir parti kontrolsüz fırında sıcaklığı 175 °C, PID ile 3
 
 ## Aksiyonlar
 
-Her bölgenin ajanı her kararda 6 güç seviyesinden birini seçiyor:
+Aksiyon (eylem), ajanın yapabildiği seçimlerdir. Bu projede ajanın tek işi, her bölgenin ısıtıcısını ne kadar açacağına
+karar vermek: 0 kapalı, 1 tam güç demek. Her bölgenin ajanı her kararda 6 güç seviyesinden birini seçiyor:
 
 | ID | Aksiyon | Açıklama |
 |---|---|---|
@@ -99,7 +116,11 @@ vermiş olurdu. 60 saniyeyi de denedim, doğrulamada 30 saniye biraz daha iyi ç
 
 ## State Tasarımı
 
-State tasarımı bu projede en çok uğraştığım konu oldu, çünkü tablolu Q-Learning state sayısına çok hassas.
+State (durum), ajanın karar verirken baktığı bilgidir; araba kullanırken hız göstergesine ve yola bakmanız gibi.
+Ajan "fırın şu an ne durumda?" sorusunun cevabına bakıp ısıtıcıyı ne kadar açacağına karar veriyor.
+
+State tasarımı bu projede en çok uğraştığım konu oldu, çünkü tablolu Q-Learning state sayısına çok hassas: tablonun her
+satırı bir durum, ve ajanın her satırı yeterince sık görüp öğrenebilmesi gerekiyor.
 
 Simülatör her adımda 30 sayılık bir gözlem veriyor: üç bölgenin sıcaklık hataları ve değişim hızları, hedefler,
 önceki komutlar, bölgelerdeki yük, ısıtıcıların gerçek gücü, yolda bekleyen komutlar ve gelecek partinin bilgisi.
@@ -176,7 +197,11 @@ sıcaklık birazdan yükselecek" hem de "ısıtıcı kapalı" durumlarını içe
 
 ## Reward Fonksiyonu
 
-Ödül her 10 saniyede veriliyor ve her zaman sıfır ya da negatif; yani bir ceza puanı. Ajan bu cezayı en aza indirmeye
+Ödül (reward), ajana yaptığının iyi mi kötü mü olduğunu söyleyen puandır; ajan ona bakarak öğreniyor. Oyunlarda
+kazanınca +1, kaybedince −1 almak gibi düşünebilirsiniz. Ama fırında "kazandım" denecek tek bir an yok, 2 saat boyunca
+sürekli iyi çalışması gerekiyor. Bu yüzden ödül her 10 saniyede veriliyor ve her zaman sıfır ya da negatif; yani bir
+ceza puanı. Aşağıdaki formül kısaca şunu söylüyor: sıcaklık hedeften uzaklaştıkça, enerji harcandıkça ve ısıtıcı sık
+sık açılıp kapandıkça ceza artıyor. Ajan bu cezayı en aza indirmeye
 çalışıyor. Sıfır en iyisi: sıcaklık tam hedefte, enerji harcanmıyor.
 
 ```math
@@ -227,7 +252,12 @@ edilemiyor. Ajanın o terimi gerçekten ne kadar değiştirebildiği daha belirl
 
 ## Q-Learning Algoritması
 
-Klasik Q-Learning güncellemesi kullanıldı. Tek fark, ajan 30 saniyede bir karar verdiği için ödülün 3 adımlık toplamı
+Q-tablosunu bir kopya kağıdı gibi düşünebilirsiniz: her durum için her seçeneğin ne kadar iyi olduğunu yazan bir
+tablo. Başta tablodaki sayılar anlamsız. Ajan bir seçenek deneyip sonucunu (cezasını) görünce o hücredeki sayıyı biraz
+düzeltiyor. Binlerce denemeden sonra tablo, her durumda hangi seçeneğin gerçekten en iyi olduğunu gösteriyor ve ajan
+artık tabloya bakıp en iyisini seçiyor.
+
+Bu düzeltme için klasik Q-Learning güncellemesi kullanıldı. Tek fark, ajan 30 saniyede bir karar verdiği için ödülün 3 adımlık toplamı
 ve γ'nın 3. kuvveti kullanılıyor:
 
 ```math
@@ -252,11 +282,13 @@ k = 1 olduğunda bu, derste gördüğümüz güncellemenin aynısı. Kod: `src/f
 | Başlangıç Q değeri | −5 | Ödüller negatif; tablo 0 ile başlasaydı hiç denenmemiş eylemler en iyi görünürdü |
 | Karar periyodu | 30 s | 60 s'den doğrulamada biraz iyi |
 | Episode sayısı | 5000 (3,6 milyon adım) | ε 4000. bölümde en alta inince eğri düzleşiyor |
-| Seed | 0, 1, 2 | Sonucun şans eseri olmadığını görmek için |
+| Seed | 0, 1, 2 | Rastgeleliğin başlangıç değeri. Aynı eğitimi 3 farklı "şansla" tekrarladım ki sonucun tesadüf olmadığı görülsün |
 
 ### Epsilon-Greedy Exploration
 
-Her kararda ε olasılıkla rastgele bir güç seviyesi seçiliyor, (1 − ε) olasılıkla tablodaki en iyi seviye.
+Ajan hep tablodaki en iyi bildiği seçeneği seçseydi, hiç denemediği seçeneklerin iyi olup olmadığını asla öğrenemezdi.
+Bu yüzden arada bir bilerek rastgele bir şey deniyor. Her kararda ε olasılıkla rastgele bir güç seviyesi seçiliyor,
+(1 − ε) olasılıkla tablodaki en iyi seviye.
 
 - Başlangıçta ε = 0,3
 - İlk 4000 bölümde doğrusal olarak 0,02'ye iniyor
@@ -276,7 +308,9 @@ Daha fazla keşif (ε 0,5 → 0,05) denediğimde test sapması 24,1'den 26,3 °C
 4. Aynı eğitim 3 farklı seed ile tekrarlanır.
 5. Seçilen tablolar ve PID, eğitimde hiç kullanılmamış 20 test senaryosunda karşılaştırılır.
 
-Karşılaştırma için her bölgeye ayrı bir PID kurdum (`src/furnace_rl/baselines/pid.py`). Ayarlarını 90 farklı
+**PID**, fabrikalarda en çok kullanılan otomatik kontrol yöntemidir. Hiçbir şey öğrenmez; sıcaklık hedeften ne kadar
+uzaksa o kadar güç veren, hata uzun sürerse gücü yavaş yavaş artıran sabit bir kuraldır. Ajanımın başarısını ölçmek için
+onu bu klasik yöntemle karşılaştırdım. Karşılaştırma için her bölgeye ayrı bir PID kurdum (`src/furnace_rl/baselines/pid.py`). Ayarlarını 90 farklı
 kombinasyonu deneyerek seçtim. Yalnızca ödüle bakan arama, yüksüzken bile sıcaklığı ±7–14 °C salındıran ayarları
 seçiyordu; sahada kabul edilmeyecek bir şey. Bu yüzden yüksüz adım yanıtında salınımın 2 °C'nin altında olması şartını
 ekledim; 90 ayarın 21'i bu şartı sağladı. Seçilen: Kp = 0,04, Ti = 300 s, Td = 60 s.
@@ -301,7 +335,9 @@ indikten sonra eğri düzleşiyor ve üç seed birbirine yaklaşıyor. Ama kesik
 
 ### Q-Learning ve PID karşılaştırması
 
-Eğitimde hiç kullanılmayan 20 test senaryosunda (her biri 2–7 soğuk parti içeren 2 saatlik çalışma):
+Eğitimde hiç kullanılmayan 20 test senaryosunda (her biri 2–7 soğuk parti içeren 2 saatlik çalışma). Tablodaki
+**ortalama sapma (RMSE)**, fırının sıcaklığının hedeften ortalama kaç derece uzak kaldığını gösterir; küçük olan daha
+iyidir. Büyük sapmalar bu ölçüde daha ağır sayılır.
 
 | Metrik | PID | Q-tablosu (3 seed) |
 |---|---|---|
@@ -400,6 +436,27 @@ kullanmadım.
 **Sonucun PID'in gerisinde kalması:** Testte Q-tablosunun PID'i geçemediğini görünce bir iyileştirme turu yaptım
 (farklı güç seviyeleri, 30 s karar, w₂ = 1). Sapma 24,1'den 22,4 °C'ye indi, seed'ler arası fark 4,0'dan 1,0 °C'ye
 düştü, ama PID'e ulaşmadı. Ayarları test sonucuna bakarak değiştirmedim, sonucu olduğu gibi yazdım.
+
+## Terimler (basitçe)
+
+| Terim | Anlamı |
+|---|---|
+| Pekiştirmeli öğrenme | Programın doğru cevabı görmeden, deneyip ödül ya da ceza alarak öğrenmesi |
+| Ajan | Karar veren program; burada ısıtıcıları yöneten |
+| Ortam / simülatör | Ajanın etkilediği dünya; burada bilgisayardaki fırın |
+| State (durum) | Ajanın karar verirken baktığı bilgi |
+| Aksiyon (eylem) | Ajanın seçimi; burada ısıtıcı gücü |
+| Ödül | Seçimin iyi mi kötü mü olduğunu söyleyen puan; burada ceza puanı |
+| Q-tablosu | Her durumda her seçeneğin ne kadar iyi olduğunu tutan tablo |
+| Epsilon-greedy | Çoğunlukla en iyi bilineni, arada bir rastgele bir şeyi denemek |
+| Bölüm (episode) | Baştan sona bir deneme; burada 2 saatlik fırın çalışması |
+| PID | Fabrikalarda yaygın, öğrenmeyen klasik otomatik kontrol yöntemi |
+| Termal çöküş | Soğuk parti girince bölge sıcaklığının hızla düşmesi |
+| Ölü zaman | Komut verildikten sonra hiçbir etkinin görülmediği süre (burada 30 s) |
+| Önizleme | Gelecek partinin bilgisinin 10 dakika önceden bilinmesi |
+| Ortalama sapma (RMSE) | Sıcaklığın hedeften ortalama ne kadar uzak kaldığı; küçük olan iyi |
+| Aşma | Sıcaklığın hedefin üstüne çıkması |
+| Seed | Rastgeleliğin başlangıç değeri; aynı deneyi farklı şanslarla tekrarlamak için |
 
 ## Proje Yapısı
 
