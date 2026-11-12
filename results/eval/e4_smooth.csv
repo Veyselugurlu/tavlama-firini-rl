@@ -1,0 +1,4 @@
+politika,RMSE [°C],maks. düşüş [°C],enerji [kWh],ort. |Δu|,yön değişimi oranı
+PID,19.163,68.426,690.067,0.052,0.415
+Q-tablosu w₃=0.05 (referans),24.081,74.079,686.268,0.02,0.004
+Q-tablosu w₃=0,23.595,73.47,685.957,0.02,0.004

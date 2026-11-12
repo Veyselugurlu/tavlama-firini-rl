@@ -1,0 +1,24 @@
+# Son (teslim edilen) Q-tablosu ayarı. configs/q_table.yaml referans ayarının üzerine iki değişiklik:
+# güç seviyeleri 0/0.2/0.3/0.4/0.6/1 ve 30 s'de bir karar. Ortam: configs/env_w_energy_1.0.yaml (w₂ = 1.0).
+# Bu ayar 20 test senaryosuna bakılmadan, 5 doğrulama senaryosundaki ortalama RMSE'ye göre seçildi.
+n_episodes: 5000
+q_init: -5.0
+gamma: 0.99               # kontrol adımı başına; karar başına γ^decision_steps
+decision_steps: 3         # 30 s'de bir karar
+alpha: 0.5
+alpha_n0: 20
+alpha_min: 0.02
+eps_start: 0.3
+eps_end: 0.02
+eps_decay_episodes: 4000
+levels: [0.0, 0.2, 0.3, 0.4, 0.6, 1.0]
+state_mode: grid
+bins:
+  error: [-100, -60, -30, -15, -8, -3, 3, 8, 20]
+  rate: [-4, 4]
+  load: [0.05, 0.5]
+  coming: [0.05, 0.4]
+eval_every: 50
+
+n_val_scenarios: 5
+val_base_seed: 5000

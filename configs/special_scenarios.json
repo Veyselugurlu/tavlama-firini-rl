@@ -1,0 +1,62 @@
+[
+  {
+    "name": "tek_agir_parti",
+    "seed": 20000,
+    "schedule": [
+      {
+        "t_arrival": 600.0,
+        "mass": 1500.0,
+        "speed": 0.2
+      }
+    ]
+  },
+  {
+    "name": "art_arda_iki_parti",
+    "seed": 20001,
+    "schedule": [
+      {
+        "t_arrival": 600.0,
+        "mass": 1200.0,
+        "speed": 0.2
+      },
+      {
+        "t_arrival": 1080.0,
+        "mass": 1200.0,
+        "speed": 0.2
+      }
+    ]
+  },
+  {
+    "name": "dagilim_disi_2500kg",
+    "seed": 20002,
+    "schedule": [
+      {
+        "t_arrival": 600.0,
+        "mass": 2500.0,
+        "speed": 0.2
+      }
+    ]
+  },
+  {
+    "name": "yavas_bant",
+    "seed": 20003,
+    "schedule": [
+      {
+        "t_arrival": 600.0,
+        "mass": 1000.0,
+        "speed": 0.05
+      }
+    ]
+  },
+  {
+    "name": "hizli_bant",
+    "seed": 20004,
+    "schedule": [
+      {
+        "t_arrival": 600.0,
+        "mass": 1000.0,
+        "speed": 0.4
+      }
+    ]
+  }
+]

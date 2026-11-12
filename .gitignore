@@ -1,0 +1,31 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Kişisel ve teslime özel dosyalar depoya girmez
+report/
+teslim/
+scripts/md_to_docx.js
+
+# Sonuçlardan yalnızca şekiller, tablolar ve son ayar ile referans ayarın en iyi Q-tabloları girer
+results/*
+!results/figures/
+!results/eval/
+results/eval/**/*.npz
+!results/models/
+results/models/*
+!results/models/q_son_seed0/
+!results/models/q_son_seed1/
+!results/models/q_son_seed2/
+!results/models/q_table_seed0/
+!results/models/q_table_seed1/
+!results/models/q_table_seed2/
+results/models/q_*_seed*/*
+!results/models/q_*_seed*/best_model.npz
+!results/models/q_*_seed*/evaluations.csv
+!results/models/q_*_seed*/config.json
+
+# Ders slaytı (hocanın materyali) depoya girmez
+Reinforcement Learning - Google Slaytlar.pdf

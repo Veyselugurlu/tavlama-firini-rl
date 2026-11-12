@@ -1,0 +1,22 @@
+# Tablolu Q-öğrenme hiperparametreleri (bölge başına bir 10×10 Q-tablosu, sinir ağı yok)
+n_episodes: 5000
+q_init: -5.0              # başlangıç Q değeri (bölge başına)
+gamma: 0.99               # kontrol adımı başına; karar başına γ^decision_steps
+decision_steps: 6         # 60 s'de bir karar
+alpha: 0.5                # başlangıç öğrenme oranı; α(s,a) = max(α_min, α / (1 + ziyaret / α_n0))
+alpha_n0: 20
+alpha_min: 0.02
+eps_start: 0.3            # ε-greedy
+eps_end: 0.02
+eps_decay_episodes: 4000
+levels: [0.0, 0.15, 0.25, 0.35, 0.5, 1.0]   # seçilebilir güç seviyeleri
+state_mode: grid          # grid: hata × yük durumu; error_rate: hata × değişim hızı
+bins:                     # kutu sınırları; kutu sayısı = sınır sayısı + 1
+  error: [-100, -60, -30, -15, -8, -3, 3, 8, 20]       # sıcaklık hatası [°C], 10 kutu
+  rate: [-4, 4]                                        # son karardan beri değişim [°C/dk]
+  load: [0.05, 0.5]                                    # bölgedeki kütle / 1500 kg
+  coming: [0.05, 0.4]                                  # yaklaşan yük
+eval_every: 50
+
+n_val_scenarios: 5
+val_base_seed: 5000
