@@ -92,12 +92,12 @@ değişen anahtarları içerir.
 
 | Ölçüt | Hedef | Sonuç |
 |---|---|---|
-| Yüksüz denge gücü B1/B2/B3 | %20–60 | %20.5 / %32.4 / %38.7 ✔ |
-| Tam güçte ısınma hızı | 5–20 °C/dk | 11.0 / 7.6 / 5.5 °C/dk ✔ |
+| Yüksüz denge gücü B1/B2/B3 | %20–60 | %20.5 / %32.4 / %38.7 (hedefte) |
+| Tam güçte ısınma hızı | 5–20 °C/dk | 11.0 / 7.6 / 5.5 °C/dk (hedefte) |
 | 1 ton parti, sabit güç (kontrolsüz) B1 düşüşü | — | 175 °C (problemin büyüklüğü) |
-| 1 ton parti, ayarlı PID, B1 düşüşü | 30–80 °C | 33.8 °C ✔ |
+| 1 ton parti, ayarlı PID, B1 düşüşü | 30–80 °C | 33.8 °C (hedefte) |
 | 1 ton parti, ayarlı PID, B1 toparlanma (±5 °C) | — | 34 dk (ısıl eylemsizlik nedeniyle uzun) |
-| Rastgele takvimde PID doyumu B1/B2/B3 | ara sıra | %37 / %22 / %9 ✔ |
+| Rastgele takvimde PID doyumu B1/B2/B3 | ara sıra | %37 / %22 / %9 (hedefte) |
 
 **Kalibrasyon sırasında alınan kararlar:**
 1. İlk değerlerle (P_max 350 kW, τ_a 60 s) PID düşüşü yalnızca 17 °C idi ve PID neredeyse

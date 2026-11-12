@@ -1,4 +1,4 @@
-# Sprint 2 – Q-Tablosu Ajanı ve PID Karşılaştırması ✅
+# Sprint 2 – Q-Tablosu Ajanı ve PID Karşılaştırması
 
 **Hedef:** Derste işlenen tablolu Q-öğrenmeyi fırına uygulamak, 3 seed ile eğitmek ve aynı test senaryolarında PID ile kıyaslamak.
 

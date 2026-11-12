@@ -1,4 +1,4 @@
-# Sprint 3 – Gürbüzlük, Ablasyon ve Ödül Analizi ✅
+# Sprint 3 – Gürbüzlük, Ablasyon ve Ödül Analizi
 
 **Hedef:** Rubriğin istediği kararlılık ve gürbüzlük analizlerini tamamlamak, reward shaping tartışmasını deneyle desteklemek.
 

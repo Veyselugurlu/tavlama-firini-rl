@@ -1,4 +1,4 @@
-# Sprint 1 – Fırın Simülatörü ve PID Baseline ✅
+# Sprint 1 – Fırın Simülatörü ve PID Baseline
 
 **Hedef:** Gerçekçi davranan, test edilmiş bir `gymnasium` fırın ortamı ve adil biçimde ayarlanmış
 PID baseline. Sprint sonunda "PID termal çöküşü geç telafi ediyor" grafiği elimizde olmalı.
